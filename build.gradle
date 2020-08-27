@@ -1,15 +1,18 @@
 
 
 buildscript {
+    ext.kotlin_version = '1.3.72'
+    ext.tornadofx_version = "1.7.17"
     repositories {
         mavenCentral()
     }
 
     dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'org.ajoberstar:grgit:1.7.2'
         classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.5.0"
         classpath 'net.ltgt.gradle:gradle-apt-plugin:0.8'
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
     }
 }
 
@@ -17,6 +20,7 @@ plugins {
     id 'java'
     id 'org.ajoberstar.grgit' version '1.7.2'
     id 'com.github.ben-manes.versions' version '0.15.0'
+    //id "com.github.spotbugs" version "4.5.0"
 }
 
 repositories {
@@ -25,11 +29,12 @@ repositories {
 
 import java.time.Instant
 
+apply plugin: "kotlin"
 apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'maven'
 apply plugin: 'idea'
-apply plugin: 'findbugs'
+//apply plugin: 'findbugs'
 apply plugin: 'checkstyle'
 apply plugin: 'net.ltgt.apt'
 apply plugin: 'java-library-distribution'
@@ -38,14 +43,19 @@ apply plugin: 'maven-publish'
 apply plugin: "jacoco"
 apply plugin: 'com.github.johnrengelman.shadow'
 
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+compileGroovy {
+    dependsOn tasks.getByPath('compileKotlin')
+    classpath += files(compileKotlin.destinationDir)
+}
 
 static String getShortenedTimestamp() {
     new Date().format("MMdd-HHmmss", TimeZone.default)
 }
 
-
-// <app>-<major-patch>-<minor-patch>-<fix>
-//version = "1.1.x.x-dev-build.02"
 version = "1.0.4.0"
 
 println "Gradle project dir: ${projectDir}"
@@ -78,9 +88,13 @@ dependencies {
             'org.assertj:assertj-core:3.8.0',
             'org.mockito:mockito-core:2.8.47',
     )
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+   // compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:1.3.72"
     testCompile group: 'org.xmlunit', name: 'xmlunit-matchers', version: '2.5.1'
     testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
-    compile group: 'org.projectlombok', name: 'lombok', version: '1.16.18'
+    compile group: 'org.projectlombok', name: 'lombok', version: '1.18.12'
+    annotationProcessor 'org.projectlombok:lombok:1.18.12'
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
     compile group: 'org.apache.commons', name: 'commons-collections4', version: '4.0'
     compile group: 'org.apache.kafka', name: 'kafka-clients', version: '1.1.0'
@@ -90,11 +104,14 @@ dependencies {
     compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.4.13'
     compile group: 'org.fxmisc.richtext', name: 'richtextfx', version: '0.8.1'
     compile group: 'org.controlsfx', name: 'controlsfx', version: '8.40.14'
+
+   // spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.7.1'
+    //spotbugs 'com.github.spotbugs:spotbugs:4.0.0'
 }
 
-task wrapper(type: Wrapper) {
-    group = rootProject.name
-    gradleVersion = '3.4.1'
+wrapper {
+    gradleVersion = '6.5'
+    distributionUrl = distributionUrl.replace("bin", "all")
 }
 
 checkstyle {
@@ -116,16 +133,31 @@ task createProperties() {
 
 processResources.dependsOn createProperties
 
-
-findbugs {
-    toolVersion = "3.0.1"
-    sourceSets = [sourceSets.main, sourceSets.test]
-    ignoreFailures = false
-    effort = "max"
-    reportLevel = "high"
-    omitVisitors = ["FindNonShortCircuit"]
-    excludeFilter = file("$rootProject.projectDir/config/findbugs/excludeFilter.xml")
-}
+//spotbugs {
+//    ignoreFailures = false
+//    showStackTraces = true
+//    showProgress = true
+//    effort = 'default'
+//    reportLevel = 'default'
+//    visitors = [ 'FindSqlInjection', 'SwitchFallthrough' ]
+//    omitVisitors = [ 'FindNonShortCircuit' ]
+//    reportsDir = file("$buildDir/spotbugs")
+//    //includeFilter = file("include.xml")
+//    excludeFilter = file("$rootProject.projectDir/config/findbugs/excludeFilter.xml")
+//    onlyAnalyze = [ 'com.foobar.MyClass', 'com.foobar.mypkg.*' ]
+//    maxHeapSize = '1g'
+//    extraArgs = [ '-nested:false' ]
+//    jvmArgs = [ '-Duser.language=ja' ]
+//}
+//findbugs {
+//    toolVersion = "3.0.1"
+//    sourceSets = [sourceSets.main, sourceSets.test]
+//    ignoreFailures = false
+//    effort = "max"
+//    reportLevel = "high"
+//    omitVisitors = ["FindNonShortCircuit"]
+//    excludeFilter = file("$rootProject.projectDir/config/findbugs/excludeFilter.xml")
+//}
 
 
 task checkAndTest {
@@ -137,11 +169,9 @@ task buildJar {
     group = rootProject.name
     dependsOn tasks.assemble, tasks.checkAndTest, tasks.shadowJar
 }
+
 shadowJar {
-    baseName = project.name
     version = project.version
-    appendix = ""
-    classifier = ""
     from("src/main/java") {
         include "/**/*.fxml"
     }
@@ -171,6 +201,9 @@ task testWithJacocoReport {
 }
 
 sourceSets.main.java.srcDirs = []
-sourceSets.main.groovy.srcDirs += ["src/main/java"]
+
+sourceSets.main.kotlin.srcDirs = ['src/main/java', 'src/main/kotlin']
+
+sourceSets.main.groovy.srcDirs += ["src/main/java", 'src/main/kotlin']
 
 build.dependsOn shadowJar

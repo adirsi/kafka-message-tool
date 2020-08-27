@@ -1,5 +1,6 @@
 package application.model.modelobjects;
 
+import application.constants.ApplicationConstants;
 import application.model.KafkaOffsetResetType;
 import application.model.ModelConfigObject;
 import application.model.RelatedConfigHolder;
@@ -12,16 +13,13 @@ import javafx.beans.property.StringProperty;
 
 import java.util.UUID;
 
-import static application.constants.ApplicationConstants.DEFAULT_CONSUMER_GROUP_ID;
-import static application.constants.ApplicationConstants.DEFAULT_FETCH_TIMEOUT;
-
 
 public class KafkaListenerConfig implements ModelConfigObject, RelatedConfigHolder<KafkaTopicConfig> {
     private final StringProperty name = new SimpleStringProperty();
     private final ObjectProperty<KafkaTopicConfig> topicConfig = new SimpleObjectProperty<>();
     private final StringProperty uuid = new SimpleStringProperty(UUID.randomUUID().toString());
-    private final StringProperty consumerGroup = new SimpleStringProperty(DEFAULT_CONSUMER_GROUP_ID);
-    private final StringProperty pollTimeout = new SimpleStringProperty(DEFAULT_FETCH_TIMEOUT);
+    private final StringProperty consumerGroup = new SimpleStringProperty(ApplicationConstants.DEFAULT_CONSUMER_GROUP_ID);
+    private final StringProperty pollTimeout = new SimpleStringProperty(ApplicationConstants.DEFAULT_FETCH_TIMEOUT);
     private final ObjectProperty<KafkaOffsetResetType> offsetResetConfig = new SimpleObjectProperty<>(KafkaOffsetResetType.EARLIEST);
     private final BooleanProperty receivedMsgLimitEnabled = new SimpleBooleanProperty(false);
     private final StringProperty receivedMsgLimitCount = new SimpleStringProperty("1");

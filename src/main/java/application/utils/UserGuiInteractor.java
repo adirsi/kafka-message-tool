@@ -1,7 +1,7 @@
 package application.utils;
 
-import com.google.common.base.CaseFormat;
 import application.constants.ApplicationConstants;
+import com.google.common.base.CaseFormat;
 import application.customfxwidgets.ConfigEntriesView;
 import javafx.application.Platform;
 import javafx.scene.Node;

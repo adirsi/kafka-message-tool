@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
-import static application.constants.ApplicationConstants.APPLICATION_NAME;
+
 import static java.util.Collections.singleton;
 import static scala.collection.JavaConversions.seqAsJavaList;
 
@@ -294,7 +294,7 @@ public class DefaultKafkaClusterProxy implements KafkaClusterProxy {
                                                  "* Producers/consumers will be unable to use this kafka cluster " +
                                                  "(e.g. will not connect properly).%n" +
                                                  "* This application (%s) cannot fetch broker configuration", advertisedListeners,
-                                             APPLICATION_NAME);
+                                             ApplicationConstants.APPLICATION_NAME);
             throw new ClusterConfigurationError(msg);
         } catch (RuntimeException e) {
             Logger.trace(e);
